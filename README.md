@@ -2,7 +2,7 @@
 # Fail2db v1.1
 ## Introduction
 Fail2db is called by Fail2Ban and logs information to a database including geographical location and total ban count.
-This information can then be used in reports, graphs or by third party programs to take further action such as permanent blocking, reporting to ISP etc..
+This information can then be used in reports, graphs or by third party programs to take further action such as permanent blocking, reporting to ISP etc.. Fail2db is based on [fail2sql](https://github.com/durzo/fail2sql) by [@durzo](https://github.com/durzo).
 
 Fail2db is written in PHP and makes use of the MaxMind GeoIP PHP API.
 
