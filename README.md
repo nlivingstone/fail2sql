@@ -26,7 +26,7 @@ TODO: Add sample output
 ## Installation
 
 1. Create a MySQL database called fail2ban
-2. Create fail2ban MySQL user to access fail2db database (needs INSERT, UPDATE, DELETE)
+2. Create fail2ban MySQL user to access fail2ban database (needs INSERT, UPDATE, DELETE)
 3. Create table by piping fail2db.sql into mysql (mysql -u fail2ban -p fail2ban < fail2db.sql)
 4. Edit fail2db and change home path and sql login details at the top of the file.
 5. Update Geo IP Database (./fail2db -u)
