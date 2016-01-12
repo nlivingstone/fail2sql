@@ -1,0 +1,210 @@
+#!/usr/bin/php
+<?PHP
+
+$path = '/path/to/fail2db';
+$host = '';
+$db = '';
+$user = '';
+$pass = '';
+$dsn = "mysql:host={$host};dbname={$db}";
+
+$arg = $_SERVER["argv"][1];
+
+if ($arg == "-l") {
+	try {
+		// Create PDO object and connect
+		$conn = new PDO($dsn, $user, $pass);
+		// Create query to get all entries in the database
+		$stmt = $conn->prepare("SELECT * FROM fail2db ORDER BY updated DESC");
+		// Execute the sql query
+		$stmt->execute();
+		// Print header column
+		echo "\n";
+		echo "First Seen\t\tLast Seen\t\tProtocol\tIP Address\t\tCount\tLocation\n";
+		echo "\n"; 
+		// Print all rows in database
+		foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+			if ($row['updated'] == null) {
+				$row['updated'] = "\t\t";
+			}
+			echo $row['added']."\t".$row['updated']."\t".$row['name']."(".$row['port']."/".$row['protocol'].")\t".$row['ip']."\t\t".$row['count']."\t".$row['geo']."\n";
+		}
+		// Disconnect from database
+		$conn = null;
+	} catch(PDOException $e) {
+		// Error has occured, print the error msg
+		echo $e->getMessage();
+		$conn = null;
+	}
+	exit;
+} elseif ($arg == "-c") {
+	try {
+		// Create PDO object and connect
+		$conn = new PDO($dsn, $user, $pass);
+		// Create query to get all entries in the database
+		$stmt = $conn->prepare("DELETE FROM `fail2db`");
+		// Execute the sql query
+		$stmt->execute();
+		// Print success msg
+		echo "Clearing database\n";
+		// Disconnect from database
+		$conn = null;
+	} catch(PDOException $e) {
+		// Error has occured, print the error msg
+		echo $e->getMessage();
+		$conn = null;
+	}
+	exit;
+} elseif ($arg == "-u") {
+	exec("wget -O - http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz |zcat - > ".$path."/GeoLiteCity.dat");
+	exit;
+} elseif ($arg == "-h") {
+	print_help();
+} else {
+
+	$name = $_SERVER["argv"][1];
+	$protocol = $_SERVER["argv"][2];
+	$port = $_SERVER["argv"][3];
+	if (!preg_match('/^\d{1,5}$/', $port)) {
+		$port = getservbyname($_SERVER["argv"][3], $protocol);
+	}
+	$ip = $_SERVER["argv"][4];
+	$added = null;
+	$updated = null;
+
+
+	include($path."/geoipcity.inc");
+	include($path."/geoipregionvars.php");
+
+	try {
+		// Create PDO object and connect
+		$conn = new PDO($dsn, $user, $pass);
+		// Create query to get all entries in the database
+		$stmt = $conn->prepare("SELECT id, count FROM fail2db WHERE name = ? AND protocol = ? AND port = ? AND ip = ?");
+		// Bind params
+		$stmt->bindParam(1, $name);
+		$stmt->bindParam(2, $protocol);
+		$stmt->bindParam(3, $port);
+		$stmt->bindParam(4, $ip);
+		// Execute query
+		$stmt->execute();
+		$result = $stmt->fetch(PDO::FETCH_OBJ);
+		// Check if any rows were affected
+		if ($stmt->rowCount() > 0) {
+			// match found in database, update row
+			$id = $result->id;
+			$count = $result->count+1;
+			try {
+				// Create query to get all entries in the database
+				$stmt = $conn->prepare("UPDATE fail2db SET count=? WHERE id=?");
+				// Bind params
+				$stmt->bindParam(1, $count);
+				$stmt->bindParam(2, $id);
+				// Execute query
+				$stmt->execute();
+				// Check if any rows were affected
+				if ($stmt->rowCount() > 0) {
+					// Print success msg
+					echo "Inserted into database\n";
+					// Disconnect from database
+					$conn = null;
+					exit;
+				} else {
+					// Print error msg
+					echo "Unable to insert into database\n";
+					// Disconnect from database
+					$conn = null;
+					exit;
+				}
+			
+			} catch(PDOException $e) {
+				// Error has occured, print the error msg
+				echo $e->getMessage();
+				$conn = null;
+			}
+		} else {
+			// no match found in database, insert new offender into database
+			$geodb = geoip_open($path."/GeoLiteCity.dat",GEOIP_STANDARD) or die ('Failed to open Geo Database');
+			$geoip = geoip_record_by_addr($geodb,$ip);
+			if ($geoip) {
+				// geoip data found
+				$insert = array($name, $protocol, $port, $ip, 1, $geoip->longitude, $geoip->latitude, $geoip->country_code, $geoip->city.', '.$geoip->country_name);
+				try {
+					// Create query to get all entries in the database
+					$stmt = $conn->prepare("INSERT INTO fail2db (name, protocol, port, ip, count, longitude, latitude, country, geo, added, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)");
+					// Execute query
+					$stmt->execute($insert);
+					// Check if any rows were affected
+					if ($stmt->rowCount() > 0) {
+						// Print success msg
+						echo "Inserted into database\n";
+						// Disconnect from database
+						$conn = null;
+						exit;
+					} else {
+						// Print error msg
+						echo "Unable to insert into database\n";
+						// Disconnect from database
+						$conn = null;
+						exit;
+					}
+				
+				} catch(PDOException $e) {
+					// Error has occured, print the error msg
+					echo $e->getMessage();
+					$conn = null;
+				}
+			} else {
+				// no geoip data found
+				$insert = array($name, $protocol, $port, $ip, 1);
+				try {
+					// Create query to get all entries in the database
+					$stmt = $conn->prepare("INSERT INTO fail2db (name, protocol, port, ip, count, added, updated) VALUES (?, ?, ?, ?, ?, NULL, NULL)");
+					// Execute query
+					$stmt->execute($insert);
+					// Check if any rows were affected
+					if ($stmt->rowCount() > 0) {
+						// Print success msg
+						echo "Inserted into database\n";
+						// Disconnect from database
+						$conn = null;
+						exit;
+					} else {
+						// Print error msg
+						echo "Unable to insert into database\n";
+						// Disconnect from database
+						$conn = null;
+						exit;
+					}
+				
+				} catch(PDOException $e) {
+					// Error has occured, print the error msg
+					echo $e->getMessage();
+					$conn = null;
+				}
+			}
+			}
+			
+	
+	} catch(PDOException $e) {
+		// Error has occured, print the error msg
+		echo $e->getMessage();
+		$conn = null;
+	}
+}
+
+function print_help() {
+	echo "Fail2db v1.1\n";
+	echo "Usage: ".$_SERVER["argv"][0]." [-h|-l|-c|-u]\n";
+	echo "\t -h: This page\n";
+	echo "\t -l: List entries in the database (max 50 showed)\n";
+	echo "\t -c: Clear the database and start fresh\n";
+	echo "\t -u: Update GeoIP database\n\n";
+	echo "To call this script from Fail2Ban append the following line to 'actionban =' and restart fail2ban\n";
+	echo "/path/to/fail2db <name> <protocol> <port> <ip>\n";
+	echo "Example for /etc/fail2ban/action.d/iptables.conf\n";
+	echo "actionban = iptables -I fail2ban-<name> 1 -s <ip> -j DROP\n";
+	echo "            /usr/local/fail2sql/fail2sql <name> <protocol> <port> <ip>\n";
+	exit;
+}
+?>
