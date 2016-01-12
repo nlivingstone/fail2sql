@@ -204,7 +204,7 @@ function print_help() {
 	echo "/path/to/fail2db <name> <protocol> <port> <ip>\n";
 	echo "Example for /etc/fail2ban/action.d/iptables.conf\n";
 	echo "actionban = iptables -I fail2ban-<name> 1 -s <ip> -j DROP\n";
-	echo "            /usr/local/fail2sql/fail2sql <name> <protocol> <port> <ip>\n";
+	echo "            /usr/local/fail2db/fail2db <name> <protocol> <port> <ip>\n";
 	exit;
 }
 ?>
