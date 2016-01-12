@@ -19,10 +19,6 @@ Geo Data (city, country)
 First Attempt
 Last Attempt
 
-Sample Output:
-[root@server fail2sql]# ./fail2sql -l
-TODO: Add sample output
-
 ## Installation
 
 1. Create a MySQL database called fail2ban
