@@ -1,5 +1,5 @@
 
-# Fail2db v1.1
+# Fail2db v1.2
 ## Introduction
 Fail2db is a database independant script called by [Fail2ban](https://github.com/fail2ban/fail2ban) and logs information to a database including geographical location and total ban count. This information can then be used in reports, graphs or by third party programs to take further action such as permanent blocking, reporting to ISP etc.. Fail2db is based on [fail2sql](https://github.com/durzo/fail2sql) by [@durzo](https://github.com/durzo).
 
