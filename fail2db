@@ -1,21 +1,24 @@
 #!/usr/bin/php
 <?PHP
 
-$path = '/path/to/fail2db';
+$path = '';
 $host = '';
 $db = '';
+$table = '';
 $user = '';
 $pass = '';
 $dsn = "mysql:host={$host};dbname={$db}";
 
 $arg = $_SERVER["argv"][1];
 
+
 if ($arg == "-l") {
+	// List all entries in database
 	try {
 		// Create PDO object and connect
 		$conn = new PDO($dsn, $user, $pass);
 		// Create query to get all entries in the database
-		$stmt = $conn->prepare("SELECT * FROM fail2db ORDER BY updated DESC");
+		$stmt = $conn->prepare("SELECT * FROM `".$table."` ORDER BY updated DESC");
 		// Execute the sql query
 		$stmt->execute();
 		// Print header column
@@ -38,11 +41,12 @@ if ($arg == "-l") {
 	}
 	exit;
 } elseif ($arg == "-c") {
+	// Clear all entries in database
 	try {
 		// Create PDO object and connect
 		$conn = new PDO($dsn, $user, $pass);
 		// Create query to get all entries in the database
-		$stmt = $conn->prepare("DELETE FROM `fail2db`");
+		$stmt = $conn->prepare("DELETE FROM `".$table."`");
 		// Execute the sql query
 		$stmt->execute();
 		// Print success msg
@@ -56,12 +60,15 @@ if ($arg == "-l") {
 	}
 	exit;
 } elseif ($arg == "-u") {
+	// Update GeoIP databse
 	exec("wget -O - http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz |zcat - > ".$path."/GeoLiteCity.dat");
 	exit;
 } elseif ($arg == "-h") {
+	// Print help page
 	print_help();
+	exit;
 } else {
-
+	// Fail2db has been called by Fail2ban
 	$name = $_SERVER["argv"][1];
 	$protocol = $_SERVER["argv"][2];
 	$port = $_SERVER["argv"][3];
@@ -80,7 +87,7 @@ if ($arg == "-l") {
 		// Create PDO object and connect
 		$conn = new PDO($dsn, $user, $pass);
 		// Create query to get all entries in the database
-		$stmt = $conn->prepare("SELECT id, count FROM fail2db WHERE name = ? AND protocol = ? AND port = ? AND ip = ?");
+		$stmt = $conn->prepare("SELECT id, count FROM `".$table."` WHERE name = ? AND protocol = ? AND port = ? AND ip = ?");
 		// Bind params
 		$stmt->bindParam(1, $name);
 		$stmt->bindParam(2, $protocol);
@@ -96,7 +103,7 @@ if ($arg == "-l") {
 			$count = $result->count+1;
 			try {
 				// Create query to get all entries in the database
-				$stmt = $conn->prepare("UPDATE fail2db SET count=? WHERE id=?");
+				$stmt = $conn->prepare("UPDATE `".$table."` SET count=? WHERE id=?");
 				// Bind params
 				$stmt->bindParam(1, $count);
 				$stmt->bindParam(2, $id);
@@ -131,7 +138,7 @@ if ($arg == "-l") {
 				$insert = array($name, $protocol, $port, $ip, 1, $geoip->longitude, $geoip->latitude, $geoip->country_code, $geoip->city.', '.$geoip->country_name);
 				try {
 					// Create query to get all entries in the database
-					$stmt = $conn->prepare("INSERT INTO fail2db (name, protocol, port, ip, count, longitude, latitude, country, geo, added, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)");
+					$stmt = $conn->prepare("INSERT INTO `".$table."` (name, protocol, port, ip, count, longitude, latitude, country, geo, added, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)");
 					// Execute query
 					$stmt->execute($insert);
 					// Check if any rows were affected
@@ -159,7 +166,7 @@ if ($arg == "-l") {
 				$insert = array($name, $protocol, $port, $ip, 1);
 				try {
 					// Create query to get all entries in the database
-					$stmt = $conn->prepare("INSERT INTO fail2db (name, protocol, port, ip, count, added, updated) VALUES (?, ?, ?, ?, ?, NULL, NULL)");
+					$stmt = $conn->prepare("INSERT INTO `".$table."` (name, protocol, port, ip, count, added, updated) VALUES (?, ?, ?, ?, ?, NULL, NULL)");
 					// Execute query
 					$stmt->execute($insert);
 					// Check if any rows were affected
@@ -183,7 +190,7 @@ if ($arg == "-l") {
 					$conn = null;
 				}
 			}
-			}
+		}
 			
 	
 	} catch(PDOException $e) {

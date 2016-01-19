@@ -1,9 +1,9 @@
-CREATE TABLE `fail2db` (
+CREATE TABLE `fail2ban` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` text NOT NULL,
-  `protocol` varchar(6) NOT NULL DEFAULT '',
-  `port` int(11) NOT NULL,
-  `ip` varchar(20) NOT NULL,
+  `protocol` varchar(20) NOT NULL DEFAULT '',
+  `port` varchar(20) NOT NULL DEFAULT '',
+  `ip` varchar(30) NOT NULL DEFAULT '',
   `count` int(11) DEFAULT NULL,
   `longitude` varchar(20) DEFAULT NULL,
   `latitude` varchar(20) DEFAULT NULL,
