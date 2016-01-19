@@ -18,6 +18,12 @@ Geo Data (city, country)
 First Attempt
 Last Attempt
 
+Sample Output
+```
+2016-01-19 12:43:02		2016-01-19 13:59:01		ssh(22/tcp)		104.236.227.138		New York, United States
+2016-01-18 19:03:54		2016-01-18 20:08:47		ssh(22/tcp)		104.131.98.200		New York, United States
+```
+
 ## Installation
 
 1. Create a MySQL database called fail2ban
